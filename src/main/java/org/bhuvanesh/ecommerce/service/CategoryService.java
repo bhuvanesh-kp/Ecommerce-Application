@@ -2,16 +2,12 @@ package org.bhuvanesh.ecommerce.service;
 
 
 
-import org.bhuvanesh.ecommerce.model.Category;
+import org.bhuvanesh.ecommerce.payload.CategoryDTO;
 import org.bhuvanesh.ecommerce.payload.CategoryResponse;
 
-import java.util.List;
-
 public interface CategoryService {
-    CategoryResponse getAllCategories();
-    void createCategory(Category category);
-
-    String deleteCategory(Long categoryId);
-
-    Category updateCategory(Category category, Long categoryId);
+    CategoryResponse getAllCategories(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+    CategoryDTO createCategory(CategoryDTO categoryDTO);
+    CategoryDTO deleteCategory(Long categoryId);
+    CategoryDTO updateCategory(CategoryDTO categoryDTO, Long categoryId);
 }
