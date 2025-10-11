@@ -1,1 +1,0 @@
-Ecommerce Full stack application 
