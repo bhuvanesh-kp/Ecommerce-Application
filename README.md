@@ -43,5 +43,6 @@ The application starts on `http://localhost:8080` by default.
 | Method | Endpoint | Request Body | Response | Description |
 |--------|----------|--------------|----------|-------------|
 | GET | `/api/users` | — | `List<User>` | Retrieve all users |
+| GET | `/api/users/{id}` | — | `{ "name": "", "email": "" }` | Retrieve a user by UUID |
 | POST | `/api/users` | `{ "name": "", "email": "" }` | `{ "name": "", "email": "" }` | Create a new user |
 

@@ -8,6 +8,7 @@ import org.bhuvanesh.ecommerce.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +18,16 @@ public class UserService {
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    public UserResponseDto getUserById(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+
+        return UserResponseDto.builder()
+                .name(user.getName())
+                .email(user.getEmail())
+                .build();
     }
 
     public UserResponseDto createUser(UserRequestDto userRequestDto) {
