@@ -39,5 +39,9 @@ The application starts on `http://localhost:8080` by default.
 
 ## API Overview
 
-> Endpoints will be documented here as they are implemented.
+### Users
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/users` | Retrieve all users |
 
