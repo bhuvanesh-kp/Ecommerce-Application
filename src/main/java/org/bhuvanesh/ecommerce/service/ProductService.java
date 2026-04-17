@@ -6,9 +6,11 @@ import org.bhuvanesh.ecommerce.dto.ProductResponseDto;
 import org.bhuvanesh.ecommerce.model.Category;
 import org.bhuvanesh.ecommerce.model.Product;
 import org.bhuvanesh.ecommerce.repository.ProductRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +28,13 @@ public class ProductService {
 
     public List<Product> searchProductsByName(String name) {
         return productRepository.findByNameContainingIgnoreCase(name);
+    }
+
+    public void deleteProduct(@NonNull UUID id) {
+        if (!productRepository.existsById(id)) {
+            throw new RuntimeException("Product not found with id: " + id);
+        }
+        productRepository.deleteById(id);
     }
 
     public ProductResponseDto createProduct(ProductRequestDto productRequestDto) {

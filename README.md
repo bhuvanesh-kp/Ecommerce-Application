@@ -136,6 +136,7 @@ The application starts on `http://localhost:8080` by default.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/internal/products` | Retrieve all products with full details (internal) |
+| GET | `/api/products/search?name={name}` | Search products by name (partial, case-insensitive) |
 | GET | `/api/products/category/{category}` | Retrieve all products by category |
 | POST | `/api/products` | Create a new product |
 

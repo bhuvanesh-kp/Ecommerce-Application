@@ -9,9 +9,11 @@ import org.bhuvanesh.ecommerce.model.Product;
 import org.bhuvanesh.ecommerce.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,6 +34,12 @@ public class ProductController {
     @GetMapping("/api/products/category/{category}")
     public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable Category category) {
         return ResponseEntity.ok(productService.getProductsByCategory(category));
+    }
+
+    @DeleteMapping("/api/products/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable @NonNull UUID id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/api/products")
