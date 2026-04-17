@@ -24,6 +24,11 @@ public class ProductController {
         return ResponseEntity.ok(productService.getAllProducts());
     }
 
+    @GetMapping("/api/products/search")
+    public ResponseEntity<List<Product>> searchProductsByName(@RequestParam String name) {
+        return ResponseEntity.ok(productService.searchProductsByName(name));
+    }
+
     @GetMapping("/api/products/category/{category}")
     public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable Category category) {
         return ResponseEntity.ok(productService.getProductsByCategory(category));

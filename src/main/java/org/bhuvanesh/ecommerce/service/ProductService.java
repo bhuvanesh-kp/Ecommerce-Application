@@ -24,6 +24,10 @@ public class ProductService {
         return productRepository.findByCategory(category);
     }
 
+    public List<Product> searchProductsByName(String name) {
+        return productRepository.findByNameContainingIgnoreCase(name);
+    }
+
     public ProductResponseDto createProduct(ProductRequestDto productRequestDto) {
         Product product = Product.builder()
                 .name(productRequestDto.getName())
