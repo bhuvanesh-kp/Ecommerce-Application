@@ -9,7 +9,6 @@ A microservice-based e-commerce backend built with Spring Boot 3.x and Java 21.
 - **Security**: Spring Security + JWT (jjwt 0.13.0)
 - **Persistence**: Spring Data JPA
 - **Database**: H2 (development)
-- **Mapping**: ModelMapper 3.2.4
 - **Validation**: Spring Boot Starter Validation
 - **Utilities**: Lombok
 - **Build**: Maven
@@ -41,7 +40,8 @@ The application starts on `http://localhost:8080` by default.
 
 ### Users
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/users` | Retrieve all users |
+| Method | Endpoint | Request Body | Response | Description |
+|--------|----------|--------------|----------|-------------|
+| GET | `/api/users` | — | `List<User>` | Retrieve all users |
+| POST | `/api/users` | `{ "name": "", "email": "" }` | `{ "name": "", "email": "" }` | Create a new user |
 
