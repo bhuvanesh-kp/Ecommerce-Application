@@ -1,9 +1,13 @@
 package org.bhuvanesh.ecommerce.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+@ToString
 @Builder
 public class UserResponseDto {
 
