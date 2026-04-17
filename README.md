@@ -28,6 +28,8 @@ A microservice-based e-commerce backend built with Spring Boot 3.x and Java 21.
 | `Product` | `products` | Stores product details including price, stock, image and category |
 | `Cart` | `cart` | One cart per user, holds cart items |
 | `CartItem` | `cart_items` | Each item in a cart with a product reference and quantity |
+| `Order` | `orders` | An order placed by a user, with status and shipping address |
+| `OrderItem` | `order_items` | Each item in an order with price snapshot at time of purchase |
 
 ### Relationships
 
@@ -36,6 +38,10 @@ A microservice-based e-commerce backend built with Spring Boot 3.x and Java 21.
 - A `User` has **one** `Cart` (`@OneToOne`, FK: `user_id`)
 - A `Cart` can have **many** `CartItem` records (`@OneToMany`)
 - Each `CartItem` references **one** `Product` (`@ManyToOne`, FK: `product_id`)
+- A `User` can have **many** `Order` records (`@ManyToOne`, FK: `user_id`)
+- Each `Order` has **many** `OrderItem` records (`@OneToMany`)
+- Each `OrderItem` references **one** `Product` (`@ManyToOne`, FK: `product_id`)
+- Each `Order` has a shipping `Address` (`@ManyToOne`, FK: `shipping_address_id`)
 
 ### Enums
 
@@ -43,6 +49,86 @@ A microservice-based e-commerce backend built with Spring Boot 3.x and Java 21.
 |------|--------|
 | `UserRole` | `CUSTOMER`, `ADMIN` |
 | `Category` | `ELECTRONICS`, `CLOTHING`, `FOOTWEAR`, `GROCERIES`, `FURNITURE`, `BOOKS` |
+| `OrderStatus` | `PENDING`, `CONFIRMED`, `SHIPPED`, `DELIVERED`, `CANCELLED` |
+
+## Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    USER {
+        UUID id PK
+        string first_name
+        string last_name
+        string email
+        string phone_number
+        string user_role
+        datetime created_at
+        datetime updated_at
+    }
+
+    ADDRESS {
+        UUID id PK
+        string street
+        string city
+        string state
+        string country
+        string pincode
+        UUID user_id FK
+    }
+
+    PRODUCT {
+        UUID id PK
+        string name
+        string description
+        decimal price
+        int stock_quantity
+        string image_url
+        string category
+        datetime created_at
+        datetime updated_at
+    }
+
+    CART {
+        UUID id PK
+        UUID user_id FK
+        datetime created_at
+        datetime updated_at
+    }
+
+    CART_ITEM {
+        UUID id PK
+        UUID cart_id FK
+        UUID product_id FK
+        int quantity
+    }
+
+    ORDER {
+        UUID id PK
+        UUID user_id FK
+        UUID shipping_address_id FK
+        string status
+        decimal total_amount
+        datetime created_at
+        datetime updated_at
+    }
+
+    ORDER_ITEM {
+        UUID id PK
+        UUID order_id FK
+        UUID product_id FK
+        int quantity
+        decimal price_at_purchase
+    }
+
+    USER ||--o{ ADDRESS : "has"
+    USER ||--|| CART : "has"
+    USER ||--o{ ORDER : "places"
+    CART ||--o{ CART_ITEM : "contains"
+    CART_ITEM }o--|| PRODUCT : "references"
+    ORDER ||--o{ ORDER_ITEM : "contains"
+    ORDER_ITEM }o--|| PRODUCT : "references"
+    ORDER }o--|| ADDRESS : "ships to"
+```
 
 ## Modules / Services
 
@@ -74,6 +160,7 @@ The application starts on `http://localhost:8080` by default.
 | POST | `/api/users` | Create a new user |
 | PUT | `/api/users/{id}` | Update an existing user |
 | POST | `/api/users/{id}/addresses` | Add a new address to an existing user |
+| POST | `/api/users/{id}/cart` | Add a product to the user's cart |
 
 #### User Request Body (`POST` / `PUT`)
 
@@ -135,6 +222,80 @@ The application starts on `http://localhost:8080` by default.
 ```
 
 > Returns `200 OK` with no body on success.
+
+#### Add to Cart Request Body (`POST /api/users/{id}/cart`)
+
+```json
+{
+  "productId": "uuid-of-product",
+  "quantity": 2
+}
+```
+
+#### Add to Cart Response Body
+
+```json
+{
+  "userFullName": "John Doe",
+  "cartItems": [
+    {
+      "productName": "Wireless Headphones",
+      "productPrice": 2999.99,
+      "quantity": 2,
+      "totalPrice": 5999.98
+    }
+  ],
+  "cartTotal": 5999.98
+}
+```
+
+> A cart is created automatically on first item add. Subsequent calls append items to the same cart.
+
+### Cart
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/users/{id}/cart` | Get the user's current cart |
+| DELETE | `/api/users/{id}/cart/{cartItemId}` | Remove an item from the cart |
+
+### Orders
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/users/{id}/orders` | Place an order from the user's cart |
+| GET | `/api/users/{id}/orders` | Get all orders for a user |
+
+#### Place Order Request Body (`POST /api/users/{id}/orders`)
+
+```json
+{
+  "shippingAddressId": "uuid-of-address"
+}
+```
+
+#### Place Order Response Body
+
+```json
+{
+  "userFullName": "John Doe",
+  "orderItems": [
+    {
+      "productName": "Wireless Headphones",
+      "quantity": 2,
+      "priceAtPurchase": 2999.99,
+      "totalPrice": 5999.98
+    }
+  ],
+  "status": "PENDING",
+  "totalAmount": 5999.98,
+  "shippingAddress": "123 Main St, Chennai, Tamil Nadu, India - 600001",
+  "createdAt": "2026-04-17T10:00:00"
+}
+```
+
+> Cart is automatically cleared after a successful order placement.
+
+> `status` accepted values: `PENDING`, `CONFIRMED`, `SHIPPED`, `DELIVERED`, `CANCELLED`
 
 ### Products
 

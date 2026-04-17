@@ -3,6 +3,8 @@ package org.bhuvanesh.ecommerce.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bhuvanesh.ecommerce.dto.AddressRequestDto;
+import org.bhuvanesh.ecommerce.dto.CartItemRequestDto;
+import org.bhuvanesh.ecommerce.dto.CartResponseDto;
 import org.bhuvanesh.ecommerce.dto.UserRequestDto;
 import org.bhuvanesh.ecommerce.dto.UserResponseDto;
 import org.bhuvanesh.ecommerce.model.User;
@@ -45,5 +47,20 @@ public class UserController {
     public ResponseEntity<Void> addAddress(@PathVariable @NonNull UUID id, @Valid @RequestBody AddressRequestDto addressRequestDto) {
         userService.addAddress(id, addressRequestDto);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/api/users/{id}/cart")
+    public ResponseEntity<CartResponseDto> getCart(@PathVariable @NonNull UUID id) {
+        return ResponseEntity.ok(userService.getCart(id));
+    }
+
+    @PostMapping("/api/users/{id}/cart")
+    public ResponseEntity<CartResponseDto> addToCart(@PathVariable @NonNull UUID id, @Valid @RequestBody CartItemRequestDto cartItemRequestDto) {
+        return ResponseEntity.ok(userService.addToCart(id, cartItemRequestDto));
+    }
+
+    @DeleteMapping("/api/users/{id}/cart/{cartItemId}")
+    public ResponseEntity<CartResponseDto> removeFromCart(@PathVariable @NonNull UUID id, @PathVariable @NonNull UUID cartItemId) {
+        return ResponseEntity.ok(userService.removeFromCart(id, cartItemId));
     }
 }
