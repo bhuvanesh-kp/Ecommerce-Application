@@ -25,11 +25,19 @@ A microservice-based e-commerce backend built with Spring Boot 3.x and Java 21.
 |--------|-------|-------------|
 | `User` | `users` | Stores user profile and role |
 | `Address` | `addresses` | Stores addresses linked to a user (one-to-many) |
+| `Product` | `products` | Stores product details including price, stock, image and category |
 
 ### Relationships
 
 - A `User` can have **many** `Address` records (`@OneToMany`)
 - Each `Address` belongs to **one** `User` (`@ManyToOne`, FK: `user_id`)
+
+### Enums
+
+| Enum | Values |
+|------|--------|
+| `UserRole` | `CUSTOMER`, `ADMIN` |
+| `Category` | `ELECTRONICS`, `CLOTHING`, `FOOTWEAR`, `GROCERIES`, `FURNITURE`, `BOOKS` |
 
 ## Modules / Services
 
@@ -56,10 +64,11 @@ The application starts on `http://localhost:8080` by default.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/users` | Retrieve all users |
+| GET | `/internal/users` | Retrieve all users with full details (internal) |
 | GET | `/api/users/{id}` | Retrieve a user by UUID |
 | POST | `/api/users` | Create a new user |
 | PUT | `/api/users/{id}` | Update an existing user |
+| POST | `/api/users/{id}/addresses` | Add a new address to an existing user |
 
 #### User Request Body (`POST` / `PUT`)
 
@@ -69,9 +78,20 @@ The application starts on `http://localhost:8080` by default.
   "lastName": "Doe",
   "email": "john.doe@example.com",
   "phoneNumber": "9876543210",
-  "userRole": "CUSTOMER"
+  "userRole": "CUSTOMER",
+  "addresses": [
+    {
+      "street": "123 Main St",
+      "city": "Chennai",
+      "state": "Tamil Nadu",
+      "country": "India",
+      "pincode": "600001"
+    }
+  ]
 }
 ```
+
+> `addresses` is optional — omit it to create a user without any address.
 
 > `userRole` accepted values: `CUSTOMER`, `ADMIN`
 
@@ -83,7 +103,30 @@ The application starts on `http://localhost:8080` by default.
   "lastName": "Doe",
   "email": "john.doe@example.com",
   "phoneNumber": "9876543210",
-  "userRole": "CUSTOMER"
+  "userRole": "CUSTOMER",
+  "addresses": [
+    {
+      "id": "uuid-here",
+      "street": "123 Main St",
+      "city": "Chennai",
+      "state": "Tamil Nadu",
+      "country": "India",
+      "pincode": "600001"
+    }
+  ]
 }
 ```
 
+#### Add Address Request Body (`POST /api/users/{id}/addresses`)
+
+```json
+{
+  "street": "456 Park Avenue",
+  "city": "Bangalore",
+  "state": "Karnataka",
+  "country": "India",
+  "pincode": "560001"
+}
+```
+
+> Returns `200 OK` with no body on success.
