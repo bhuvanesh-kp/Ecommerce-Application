@@ -1,6 +1,7 @@
 package org.bhuvanesh.ecommerce.dto;
 
 import lombok.*;
+import org.bhuvanesh.ecommerce.model.UserRole;
 
 @Getter
 @Setter
@@ -11,7 +12,13 @@ import lombok.*;
 @Builder
 public class UserResponseDto {
 
-    private String name;
+    private String firstName;
+
+    private String lastName;
 
     private String email;
+
+    private String phoneNumber;
+
+    private UserRole userRole;
 }

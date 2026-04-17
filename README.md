@@ -40,9 +40,36 @@ The application starts on `http://localhost:8080` by default.
 
 ### Users
 
-| Method | Endpoint | Request Body | Response | Description |
-|--------|----------|--------------|----------|-------------|
-| GET | `/api/users` | — | `List<User>` | Retrieve all users |
-| GET | `/api/users/{id}` | — | `{ "name": "", "email": "" }` | Retrieve a user by UUID |
-| POST | `/api/users` | `{ "name": "", "email": "" }` | `{ "name": "", "email": "" }` | Create a new user |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/users` | Retrieve all users |
+| GET | `/api/users/{id}` | Retrieve a user by UUID |
+| POST | `/api/users` | Create a new user |
+| PUT | `/api/users/{id}` | Update an existing user |
+
+#### User Request Body (`POST` / `PUT`)
+
+```json
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "phoneNumber": "9876543210",
+  "userRole": "CUSTOMER"
+}
+```
+
+> `userRole` accepted values: `CUSTOMER`, `ADMIN`
+
+#### User Response Body
+
+```json
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "phoneNumber": "9876543210",
+  "userRole": "CUSTOMER"
+}
+```
 
