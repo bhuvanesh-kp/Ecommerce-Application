@@ -130,3 +130,25 @@ The application starts on `http://localhost:8080` by default.
 ```
 
 > Returns `200 OK` with no body on success.
+
+### Products
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/products` | Retrieve all products |
+
+#### Product Response Body
+
+```json
+{
+  "id": "uuid-here",
+  "name": "Wireless Headphones",
+  "description": "Noise cancelling over-ear headphones",
+  "price": 2999.99,
+  "stockQuantity": 50,
+  "imageUrl": "https://example.com/images/headphones.jpg",
+  "category": "ELECTRONICS"
+}
+```
+
+> `category` accepted values: `ELECTRONICS`, `CLOTHING`, `FOOTWEAR`, `GROCERIES`, `FURNITURE`, `BOOKS`
