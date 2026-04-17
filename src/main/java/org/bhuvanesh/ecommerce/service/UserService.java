@@ -81,7 +81,7 @@ public class UserService {
         return toResponseDto(userRepository.save(user));
     }
 
-    public void addAddress(@NonNull UUID userId, AddressRequestDto addressRequestDto) {
+    public void addAddress(@NonNull UUID userId,AddressRequestDto addressRequestDto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
