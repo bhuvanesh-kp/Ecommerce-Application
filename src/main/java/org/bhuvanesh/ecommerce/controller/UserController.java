@@ -2,8 +2,10 @@ package org.bhuvanesh.ecommerce.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.bhuvanesh.ecommerce.dto.AddressRequestDto;
 import org.bhuvanesh.ecommerce.dto.UserRequestDto;
 import org.bhuvanesh.ecommerce.dto.UserResponseDto;
+import org.bhuvanesh.ecommerce.model.User;
 import org.bhuvanesh.ecommerce.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,29 +16,34 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
-    @GetMapping
-    public ResponseEntity<List<UserResponseDto>> getAllUsers() {
+    @GetMapping("/internal/users")
+    public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/api/users/{id}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable @NonNull UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/api/users/{id}")
     public ResponseEntity<UserResponseDto> updateUser(@PathVariable @NonNull UUID id, @Valid @RequestBody UserRequestDto userRequestDto) {
         return ResponseEntity.ok(userService.updateUser(id, userRequestDto));
     }
 
-    @PostMapping
+    @PostMapping("/api/users")
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto userRequestDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(userRequestDto));
+    }
+
+    @PostMapping("/api/users/{id}/addresses")
+    public ResponseEntity<Void> addAddress(@PathVariable @NonNull UUID id, @Valid @RequestBody AddressRequestDto addressRequestDto) {
+        userService.addAddress(id, addressRequestDto);
+        return ResponseEntity.ok().build();
     }
 }

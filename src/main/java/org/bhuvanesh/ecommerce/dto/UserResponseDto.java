@@ -3,6 +3,8 @@ package org.bhuvanesh.ecommerce.dto;
 import lombok.*;
 import org.bhuvanesh.ecommerce.model.UserRole;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,4 +23,6 @@ public class UserResponseDto {
     private String phoneNumber;
 
     private UserRole userRole;
+
+    private List<AddressResponseDto> addresses;
 }

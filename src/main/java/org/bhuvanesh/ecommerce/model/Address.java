@@ -1,5 +1,6 @@
 package org.bhuvanesh.ecommerce.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,6 +35,7 @@ public class Address {
     @Column(name = "pincode", nullable = false)
     private String pincode;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

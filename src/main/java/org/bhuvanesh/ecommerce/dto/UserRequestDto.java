@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.bhuvanesh.ecommerce.model.UserRole;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -30,4 +32,6 @@ public class UserRequestDto {
 
     @NotNull
     private UserRole userRole;
+
+    private List<AddressRequestDto> addresses;
 }
