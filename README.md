@@ -26,11 +26,16 @@ A microservice-based e-commerce backend built with Spring Boot 3.x and Java 21.
 | `User` | `users` | Stores user profile and role |
 | `Address` | `addresses` | Stores addresses linked to a user (one-to-many) |
 | `Product` | `products` | Stores product details including price, stock, image and category |
+| `Cart` | `cart` | One cart per user, holds cart items |
+| `CartItem` | `cart_items` | Each item in a cart with a product reference and quantity |
 
 ### Relationships
 
 - A `User` can have **many** `Address` records (`@OneToMany`)
 - Each `Address` belongs to **one** `User` (`@ManyToOne`, FK: `user_id`)
+- A `User` has **one** `Cart` (`@OneToOne`, FK: `user_id`)
+- A `Cart` can have **many** `CartItem` records (`@OneToMany`)
+- Each `CartItem` references **one** `Product` (`@ManyToOne`, FK: `product_id`)
 
 ### Enums
 
@@ -139,6 +144,7 @@ The application starts on `http://localhost:8080` by default.
 | GET | `/api/products/search?name={name}` | Search products by name (partial, case-insensitive) |
 | GET | `/api/products/category/{category}` | Retrieve all products by category |
 | POST | `/api/products` | Create a new product |
+| DELETE | `/api/products/{id}` | Delete a product by UUID |
 
 #### Product Request Body (`POST /api/products`)
 
