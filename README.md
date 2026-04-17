@@ -264,6 +264,8 @@ The application starts on `http://localhost:8080` by default.
 |--------|----------|-------------|
 | POST | `/api/users/{id}/orders` | Place an order from the user's cart |
 | GET | `/api/users/{id}/orders` | Get all orders for a user |
+| GET | `/api/users/{id}/orders/{orderId}` | Get a single order by ID |
+| PATCH | `/api/users/{id}/orders/{orderId}/cancel` | Cancel an order |
 
 #### Place Order Request Body (`POST /api/users/{id}/orders`)
 
