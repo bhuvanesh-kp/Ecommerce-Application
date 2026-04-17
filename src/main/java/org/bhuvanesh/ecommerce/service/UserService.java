@@ -5,6 +5,7 @@ import org.bhuvanesh.ecommerce.dto.UserRequestDto;
 import org.bhuvanesh.ecommerce.dto.UserResponseDto;
 import org.bhuvanesh.ecommerce.model.User;
 import org.bhuvanesh.ecommerce.repository.UserRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,11 +17,16 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponseDto> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(user -> UserResponseDto.builder()
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .build())
+                .toList();
     }
 
-    public UserResponseDto getUserById(UUID id) {
+    public UserResponseDto getUserById(@NonNull UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 

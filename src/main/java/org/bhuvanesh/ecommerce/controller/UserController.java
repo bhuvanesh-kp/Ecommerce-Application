@@ -4,10 +4,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bhuvanesh.ecommerce.dto.UserRequestDto;
 import org.bhuvanesh.ecommerce.dto.UserResponseDto;
-import org.bhuvanesh.ecommerce.model.User;
 import org.bhuvanesh.ecommerce.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,12 +21,12 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<UserResponseDto>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDto> getUserById(@PathVariable UUID id) {
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable @NonNull UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
