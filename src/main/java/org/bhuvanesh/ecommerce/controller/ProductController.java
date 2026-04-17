@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bhuvanesh.ecommerce.dto.ProductRequestDto;
 import org.bhuvanesh.ecommerce.dto.ProductResponseDto;
+import org.bhuvanesh.ecommerce.model.Category;
 import org.bhuvanesh.ecommerce.model.Product;
 import org.bhuvanesh.ecommerce.service.ProductService;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,11 @@ public class ProductController {
     @GetMapping("/api/internal/products")
     public ResponseEntity<List<Product>> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
+    }
+
+    @GetMapping("/api/products/category/{category}")
+    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable Category category) {
+        return ResponseEntity.ok(productService.getProductsByCategory(category));
     }
 
     @PostMapping("/api/products")

@@ -135,13 +135,29 @@ The application starts on `http://localhost:8080` by default.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/products` | Retrieve all products |
+| GET | `/api/internal/products` | Retrieve all products with full details (internal) |
+| GET | `/api/products/category/{category}` | Retrieve all products by category |
+| POST | `/api/products` | Create a new product |
+
+#### Product Request Body (`POST /api/products`)
+
+```json
+{
+  "name": "Wireless Headphones",
+  "description": "Noise cancelling over-ear headphones",
+  "price": 2999.99,
+  "stockQuantity": 50,
+  "imageUrl": "https://example.com/images/headphones.jpg",
+  "category": "ELECTRONICS"
+}
+```
+
+> `description` and `imageUrl` are optional.
 
 #### Product Response Body
 
 ```json
 {
-  "id": "uuid-here",
   "name": "Wireless Headphones",
   "description": "Noise cancelling over-ear headphones",
   "price": 2999.99,

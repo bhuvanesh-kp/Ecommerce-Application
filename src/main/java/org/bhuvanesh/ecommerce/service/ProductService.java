@@ -3,6 +3,7 @@ package org.bhuvanesh.ecommerce.service;
 import lombok.RequiredArgsConstructor;
 import org.bhuvanesh.ecommerce.dto.ProductRequestDto;
 import org.bhuvanesh.ecommerce.dto.ProductResponseDto;
+import org.bhuvanesh.ecommerce.model.Category;
 import org.bhuvanesh.ecommerce.model.Product;
 import org.bhuvanesh.ecommerce.repository.ProductRepository;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,10 @@ public class ProductService {
 
     public List<Product> getAllProducts() {
         return productRepository.findAll();
+    }
+
+    public List<Product> getProductsByCategory(Category category) {
+        return productRepository.findByCategory(category);
     }
 
     public ProductResponseDto createProduct(ProductRequestDto productRequestDto) {
