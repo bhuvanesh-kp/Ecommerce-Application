@@ -17,6 +17,20 @@ A microservice-based e-commerce backend built with Spring Boot 3.x and Java 21.
 
 > Early development phase — services and features are being added incrementally.
 
+## Data Model
+
+### Entities
+
+| Entity | Table | Description |
+|--------|-------|-------------|
+| `User` | `users` | Stores user profile and role |
+| `Address` | `addresses` | Stores addresses linked to a user (one-to-many) |
+
+### Relationships
+
+- A `User` can have **many** `Address` records (`@OneToMany`)
+- Each `Address` belongs to **one** `User` (`@ManyToOne`, FK: `user_id`)
+
 ## Modules / Services
 
 > To be documented as services are added.
