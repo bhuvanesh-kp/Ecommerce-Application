@@ -23,6 +23,16 @@ services:
       - mongo_data:/data/db
     restart: unless-stopped
 
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_HOST: eureka-server
+    stop_grace_period: 35s
+    restart: unless-stopped
+
   user-service:
     build: ./user-service
     container_name: user-service
@@ -32,10 +42,11 @@ services:
       MONGO_HOST: mongodb
       MONGO_PORT: 27017
       MONGO_DB: ecommerce_users
-      PRODUCT_SERVICE_URL: http://product-service:8082
+      EUREKA_SERVER_URL: http://eureka-server:8761/eureka/
     depends_on:
       - mongodb
-      - product-service
+      - eureka-server
+    stop_grace_period: 35s
     restart: unless-stopped
 
   product-service:
@@ -49,8 +60,11 @@ services:
       DB_NAME: ecommerce_products
       DB_USER: postgres
       DB_PASSWORD: postgres
+      EUREKA_SERVER_URL: http://eureka-server:8761/eureka/
     depends_on:
       - postgres
+      - eureka-server
+    stop_grace_period: 35s
     restart: unless-stopped
 
   order-service:
@@ -64,12 +78,13 @@ services:
       DB_NAME: ecommerce_orders
       DB_USER: postgres
       DB_PASSWORD: postgres
-      USER_SERVICE_URL: http://user-service:8081
-      PRODUCT_SERVICE_URL: http://product-service:8082
+      EUREKA_SERVER_URL: http://eureka-server:8761/eureka/
     depends_on:
       - postgres
+      - eureka-server
       - user-service
       - product-service
+    stop_grace_period: 35s
     restart: unless-stopped
 
 volumes:

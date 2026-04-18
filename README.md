@@ -15,17 +15,16 @@ A microservice-based e-commerce backend built with Spring Boot 3.x and Java 21.
 | Build | Maven |
 | Containerisation | Docker + Docker Compose |
 | Monitoring | Spring Boot Actuator |
-
-## Project Status
-
-> Active development — microservice split complete, inter-service communication pending.
+| Service Discovery | Netflix Eureka |
+| Inter-service Communication | Spring HTTP Interface (`RestClient` + `@LoadBalanced`) |
 
 ## Architecture
 
-Three independently deployable microservices, each with its own database:
+Four independently deployable services — one registry, three business services each with its own database:
 
 | Service | Port | Database | Responsibility |
 |---------|------|----------|----------------|
+| `eureka-server` | 8761 | — | Service registry |
 | `user-service` | 8081 | `ecommerce_users` (MongoDB) | Users, addresses, cart |
 | `product-service` | 8082 | `ecommerce_products` (PostgreSQL) | Products, categories, stock |
 | `order-service` | 8083 | `ecommerce_orders` (PostgreSQL) | Orders, order items |
@@ -68,7 +67,7 @@ Three independently deployable microservices, each with its own database:
 ```mermaid
 erDiagram
     USER {
-        UUID id PK
+        string id PK
         string first_name
         string last_name
         string email
@@ -79,13 +78,12 @@ erDiagram
     }
 
     ADDRESS {
-        UUID id PK
+        string id
         string street
         string city
         string state
         string country
         string pincode
-        UUID user_id FK
     }
 
     PRODUCT {
@@ -100,17 +98,9 @@ erDiagram
         datetime updated_at
     }
 
-    CART {
-        UUID id PK
-        UUID user_id FK
-        datetime created_at
-        datetime updated_at
-    }
-
     CART_ITEM {
-        UUID id PK
-        UUID cart_id FK
-        UUID product_id
+        string id
+        string product_id
         string product_name
         decimal product_price
         int quantity
@@ -135,23 +125,25 @@ erDiagram
         decimal price_at_purchase
     }
 
-    USER ||--o{ ADDRESS : "has"
-    USER ||--|| CART : "has"
-    CART ||--o{ CART_ITEM : "contains"
+    USER ||--o{ ADDRESS : "embeds"
+    USER ||--o{ CART_ITEM : "embeds"
     ORDER ||--o{ ORDER_ITEM : "contains"
 ```
 
-> Cross-service relationships (User→Order, CartItem→Product, OrderItem→Product) are maintained by UUID references, not JPA foreign keys.
+> `USER`, `ADDRESS`, and `CART_ITEM` are a single MongoDB document. Cross-service relationships (User→Order, CartItem→Product, OrderItem→Product) are maintained by ID references, not JPA foreign keys.
 
 ## Business Decisions
 
 - **Product snapshot on cart/order**: `CartItem` and `OrderItem` store `productName` and `price` at the time of addition, so price changes do not affect existing carts or orders.
-- **Cart auto-created**: A cart is created automatically the first time a user adds an item.
+- **Cart embedded in User**: Cart items are stored directly on the `User` MongoDB document — no separate cart collection or repository.
 - **Cart cleared on order**: Placing an order clears the user's cart atomically.
 - **Stock validation**: Stock is checked before an order is placed. Insufficient stock throws an error with the product name and available quantity.
 - **Stock restored on cancel**: Cancelling an order restores stock for every line item.
 - **Cancel guard**: Orders with status `DELIVERED` or `CANCELLED` cannot be cancelled.
 - **Address ownership**: Shipping address is validated to belong to the requesting user before placing an order.
+- **Service discovery via Eureka**: Services resolve each other by logical name (`http://user-service`, `http://product-service`) — no hardcoded URLs in inter-service calls.
+- **Self-preservation enabled**: Eureka retains registered instances during network partitions rather than mass-evicting them (threshold: 85% heartbeat renewal).
+- **Graceful shutdown**: All services drain in-flight requests before stopping (30s window). Docker `stop_grace_period` is set to 35s to give the JVM time to complete before `SIGKILL`.
 
 ## Getting Started
 
@@ -165,10 +157,11 @@ erDiagram
 docker compose up --build
 ```
 
-Creates three PostgreSQL databases and starts all three services.
+Starts PostgreSQL, MongoDB, Eureka, and all three services.
 
 | Service | URL |
 |---------|-----|
+| eureka-server | http://localhost:8761 |
 | user-service | http://localhost:8081 |
 | product-service | http://localhost:8082 |
 | order-service | http://localhost:8083 |

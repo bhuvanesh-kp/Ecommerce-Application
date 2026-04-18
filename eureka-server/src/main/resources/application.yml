@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: eureka-server
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+server:
+  port: 8761
+  shutdown: graceful
+
+eureka:
+  instance:
+    hostname: ${EUREKA_HOST:localhost}
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+  server:
+    enable-self-preservation: true
+    renewal-percent-threshold: 0.85
+    renewal-threshold-update-interval-ms: 15000
+    eviction-interval-timer-in-ms: 60000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

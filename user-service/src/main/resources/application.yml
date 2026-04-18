@@ -6,11 +6,23 @@ spring:
     mongodb:
       uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DB:ecommerce_users}
 
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
 services:
-  product-service: ${PRODUCT_SERVICE_URL:http://localhost:8082}
+  product-service: http://product-service
 
 server:
   port: 8081
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 management:
   endpoints:

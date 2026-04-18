@@ -17,12 +17,24 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
-server:
-  port: 8083
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
 
 services:
-  user-service: ${USER_SERVICE_URL:http://localhost:8081}
-  product-service: ${PRODUCT_SERVICE_URL:http://localhost:8082}
+  user-service: http://user-service
+  product-service: http://product-service
+
+server:
+  port: 8083
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
 management:
   endpoints:

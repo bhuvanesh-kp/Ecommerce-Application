@@ -1,7 +1,8 @@
-package org.bhuvanesh.userservice.config;
+    package org.bhuvanesh.userservice.config;
 
 import org.bhuvanesh.userservice.client.ProductServiceClient;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
@@ -15,8 +16,14 @@ public class AppConfig {
     private String productServiceUrl;
 
     @Bean
-    public ProductServiceClient productServiceClient() {
-        RestClient restClient = RestClient.builder().baseUrl(productServiceUrl).build();
+    @LoadBalanced
+    public RestClient.Builder restClientBuilder() {
+        return RestClient.builder();
+    }
+
+    @Bean
+    public ProductServiceClient productServiceClient(RestClient.Builder builder) {
+        RestClient restClient = builder.baseUrl(productServiceUrl).build();
         return HttpServiceProxyFactory
                 .builderFor(RestClientAdapter.create(restClient))
                 .build()
