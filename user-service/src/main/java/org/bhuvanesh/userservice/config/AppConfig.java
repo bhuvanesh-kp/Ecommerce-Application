@@ -1,7 +1,6 @@
-package org.bhuvanesh.orderservice.config;
+package org.bhuvanesh.userservice.config;
 
-import org.bhuvanesh.orderservice.client.ProductServiceClient;
-import org.bhuvanesh.orderservice.client.UserServiceClient;
+import org.bhuvanesh.userservice.client.ProductServiceClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,20 +11,8 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 @Configuration
 public class AppConfig {
 
-    @Value("${services.user-service}")
-    private String userServiceUrl;
-
     @Value("${services.product-service}")
     private String productServiceUrl;
-
-    @Bean
-    public UserServiceClient userServiceClient() {
-        RestClient restClient = RestClient.builder().baseUrl(userServiceUrl).build();
-        return HttpServiceProxyFactory
-                .builderFor(RestClientAdapter.create(restClient))
-                .build()
-                .createClient(UserServiceClient.class);
-    }
 
     @Bean
     public ProductServiceClient productServiceClient() {

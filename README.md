@@ -8,8 +8,8 @@ A microservice-based e-commerce backend built with Spring Boot 3.x and Java 21.
 |---------|------------|
 | Framework | Spring Boot 3.5.6 |
 | Language | Java 21 |
-| Persistence | Spring Data JPA |
-| Database | PostgreSQL 16 |
+| Persistence | Spring Data JPA / Spring Data MongoDB |
+| Database | PostgreSQL 16 (product, order services), MongoDB 7 (user-service) |
 | Validation | Spring Boot Starter Validation |
 | Utilities | Lombok |
 | Build | Maven |
@@ -26,30 +26,29 @@ Three independently deployable microservices, each with its own database:
 
 | Service | Port | Database | Responsibility |
 |---------|------|----------|----------------|
-| `user-service` | 8081 | `ecommerce_users` | Users, addresses, cart |
-| `product-service` | 8082 | `ecommerce_products` | Products, categories, stock |
-| `order-service` | 8083 | `ecommerce_orders` | Orders, order items |
+| `user-service` | 8081 | `ecommerce_users` (MongoDB) | Users, addresses, cart |
+| `product-service` | 8082 | `ecommerce_products` (PostgreSQL) | Products, categories, stock |
+| `order-service` | 8083 | `ecommerce_orders` (PostgreSQL) | Orders, order items |
 
 ## Data Model
 
 ### Entities per Service
 
-**user-service**
+**user-service** (MongoDB)
 
-| Entity | Table | Description |
-|--------|-------|-------------|
-| `User` | `users` | User profile and role |
-| `Address` | `addresses` | Addresses linked to a user |
-| `Cart` | `cart` | One cart per user |
-| `CartItem` | `cart_items` | Items in a cart — stores product snapshot (name, price) |
+| Document | Collection | Description |
+|----------|------------|-------------|
+| `User` | `users` | User profile and role; embeds addresses and cart items |
+| `Address` | *(embedded in User)* | Address subdocument |
+| `CartItem` | *(embedded in User)* | Cart item subdocument — stores product snapshot (name, price) |
 
-**product-service**
+**product-service** (PostgreSQL)
 
 | Entity | Table | Description |
 |--------|-------|-------------|
 | `Product` | `products` | Product details, stock, image, category |
 
-**order-service**
+**order-service** (PostgreSQL)
 
 | Entity | Table | Description |
 |--------|-------|-------------|

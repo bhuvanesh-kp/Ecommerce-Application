@@ -1,17 +1,17 @@
 package org.bhuvanesh.userservice.service;
 
 import lombok.RequiredArgsConstructor;
+import org.bhuvanesh.userservice.client.ProductServiceClient;
+import org.bhuvanesh.userservice.client.dto.ProductResponse;
 import org.bhuvanesh.userservice.dto.*;
 import org.bhuvanesh.userservice.model.*;
 import org.bhuvanesh.userservice.repository.UserRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -19,7 +19,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final RestTemplate restTemplate;
+    private final ProductServiceClient productServiceClient;
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -98,15 +98,9 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        Map<?, ?> product = restTemplate.getForObject(
-                "http://product-service/api/products/" + dto.getProductId(), Map.class);
-
-        if (product == null) {
-            throw new RuntimeException("Product not found with id: " + dto.getProductId());
-        }
-
-        String productName = (String) product.get("name");
-        BigDecimal productPrice = new BigDecimal(product.get("price").toString());
+        ProductResponse product = productServiceClient.getProductById(dto.getProductId());
+        String productName = product.getName();
+        BigDecimal productPrice = product.getPrice();
 
         CartItem cartItem = CartItem.builder()
                 .id(UUID.randomUUID().toString())

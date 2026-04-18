@@ -6,6 +6,9 @@ spring:
     mongodb:
       uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DB:ecommerce_users}
 
+services:
+  product-service: ${PRODUCT_SERVICE_URL:http://localhost:8082}
+
 server:
   port: 8081
 
