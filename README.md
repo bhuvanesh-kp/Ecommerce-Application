@@ -8,10 +8,11 @@ A microservice-based e-commerce backend built with Spring Boot 3.x and Java 21.
 - **Language**: Java 21
 - **Security**: Spring Security + JWT (jjwt 0.13.0)
 - **Persistence**: Spring Data JPA
-- **Database**: H2 (development)
+- **Database**: PostgreSQL 16
 - **Validation**: Spring Boot Starter Validation
 - **Utilities**: Lombok
 - **Build**: Maven
+- **Containerisation**: Docker + Docker Compose
 
 ## Project Status
 
@@ -140,14 +141,45 @@ erDiagram
 
 - Java 21+
 - Maven 3.8+
+- Docker + Docker Compose (for containerised run)
+- PostgreSQL 16 (for local run without Docker)
 
-### Run Locally
+### Run with Docker Compose (recommended)
+
+```bash
+docker compose up --build
+```
+
+Starts both the app and a PostgreSQL instance. App available at `http://localhost:8080`.
+
+### Run Locally (without Docker)
+
+Ensure a PostgreSQL instance is running, then configure the following environment variables or update `application.yml`:
+
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ecommerce
+DB_USER=postgres
+DB_PASSWORD=postgres
+```
 
 ```bash
 mvn spring-boot:run
 ```
 
-The application starts on `http://localhost:8080` by default.
+### Actuator
+
+Monitor the application at `http://localhost:8080/actuator`.
+
+| Endpoint | Description |
+|----------|-------------|
+| `/actuator/health` | App and DB health |
+| `/actuator/info` | App metadata |
+| `/actuator/metrics` | JVM and HTTP metrics |
+| `/actuator/mappings` | All registered HTTP endpoints |
+| `/actuator/env` | Active environment properties |
+| `/actuator/loggers` | View and change log levels at runtime |
 
 ## API Overview
 
