@@ -4,53 +4,65 @@ A microservice-based e-commerce backend built with Spring Boot 3.x and Java 21.
 
 ## Tech Stack
 
-- **Framework**: Spring Boot 3.5.6
-- **Language**: Java 21
-- **Security**: Spring Security + JWT (jjwt 0.13.0)
-- **Persistence**: Spring Data JPA
-- **Database**: PostgreSQL 16
-- **Validation**: Spring Boot Starter Validation
-- **Utilities**: Lombok
-- **Build**: Maven
-- **Containerisation**: Docker + Docker Compose
+| Concern | Technology |
+|---------|------------|
+| Framework | Spring Boot 3.5.6 |
+| Language | Java 21 |
+| Persistence | Spring Data JPA |
+| Database | PostgreSQL 16 |
+| Validation | Spring Boot Starter Validation |
+| Utilities | Lombok |
+| Build | Maven |
+| Containerisation | Docker + Docker Compose |
+| Monitoring | Spring Boot Actuator |
 
 ## Project Status
 
-> Early development phase — services and features are being added incrementally.
+> Active development — microservice split complete, inter-service communication pending.
+
+## Architecture
+
+Three independently deployable microservices, each with its own database:
+
+| Service | Port | Database | Responsibility |
+|---------|------|----------|----------------|
+| `user-service` | 8081 | `ecommerce_users` | Users, addresses, cart |
+| `product-service` | 8082 | `ecommerce_products` | Products, categories, stock |
+| `order-service` | 8083 | `ecommerce_orders` | Orders, order items |
 
 ## Data Model
 
-### Entities
+### Entities per Service
+
+**user-service**
 
 | Entity | Table | Description |
 |--------|-------|-------------|
-| `User` | `users` | Stores user profile and role |
-| `Address` | `addresses` | Stores addresses linked to a user (one-to-many) |
-| `Product` | `products` | Stores product details including price, stock, image and category |
-| `Cart` | `cart` | One cart per user, holds cart items |
-| `CartItem` | `cart_items` | Each item in a cart with a product reference and quantity |
-| `Order` | `orders` | An order placed by a user, with status and shipping address |
-| `OrderItem` | `order_items` | Each item in an order with price snapshot at time of purchase |
+| `User` | `users` | User profile and role |
+| `Address` | `addresses` | Addresses linked to a user |
+| `Cart` | `cart` | One cart per user |
+| `CartItem` | `cart_items` | Items in a cart — stores product snapshot (name, price) |
 
-### Relationships
+**product-service**
 
-- A `User` can have **many** `Address` records (`@OneToMany`)
-- Each `Address` belongs to **one** `User` (`@ManyToOne`, FK: `user_id`)
-- A `User` has **one** `Cart` (`@OneToOne`, FK: `user_id`)
-- A `Cart` can have **many** `CartItem` records (`@OneToMany`)
-- Each `CartItem` references **one** `Product` (`@ManyToOne`, FK: `product_id`)
-- A `User` can have **many** `Order` records (`@ManyToOne`, FK: `user_id`)
-- Each `Order` has **many** `OrderItem` records (`@OneToMany`)
-- Each `OrderItem` references **one** `Product` (`@ManyToOne`, FK: `product_id`)
-- Each `Order` has a shipping `Address` (`@ManyToOne`, FK: `shipping_address_id`)
+| Entity | Table | Description |
+|--------|-------|-------------|
+| `Product` | `products` | Product details, stock, image, category |
+
+**order-service**
+
+| Entity | Table | Description |
+|--------|-------|-------------|
+| `Order` | `orders` | Order placed by a user, with status and shipping address |
+| `OrderItem` | `order_items` | Line items with price snapshot at time of purchase |
 
 ### Enums
 
-| Enum | Values |
-|------|--------|
-| `UserRole` | `CUSTOMER`, `ADMIN` |
-| `Category` | `ELECTRONICS`, `CLOTHING`, `FOOTWEAR`, `GROCERIES`, `FURNITURE`, `BOOKS` |
-| `OrderStatus` | `PENDING`, `CONFIRMED`, `SHIPPED`, `DELIVERED`, `CANCELLED` |
+| Enum | Service | Values |
+|------|---------|--------|
+| `UserRole` | user-service | `CUSTOMER`, `ADMIN` |
+| `Category` | product-service | `ELECTRONICS`, `CLOTHING`, `FOOTWEAR`, `GROCERIES`, `FURNITURE`, `BOOKS` |
+| `OrderStatus` | order-service | `PENDING`, `CONFIRMED`, `SHIPPED`, `DELIVERED`, `CANCELLED` |
 
 ## Entity Relationship Diagram
 
@@ -99,14 +111,16 @@ erDiagram
     CART_ITEM {
         UUID id PK
         UUID cart_id FK
-        UUID product_id FK
+        UUID product_id
+        string product_name
+        decimal product_price
         int quantity
     }
 
     ORDER {
         UUID id PK
-        UUID user_id FK
-        UUID shipping_address_id FK
+        UUID user_id
+        string shipping_address
         string status
         decimal total_amount
         datetime created_at
@@ -116,61 +130,53 @@ erDiagram
     ORDER_ITEM {
         UUID id PK
         UUID order_id FK
-        UUID product_id FK
+        UUID product_id
+        string product_name
         int quantity
         decimal price_at_purchase
     }
 
     USER ||--o{ ADDRESS : "has"
     USER ||--|| CART : "has"
-    USER ||--o{ ORDER : "places"
     CART ||--o{ CART_ITEM : "contains"
-    CART_ITEM }o--|| PRODUCT : "references"
     ORDER ||--o{ ORDER_ITEM : "contains"
-    ORDER_ITEM }o--|| PRODUCT : "references"
-    ORDER }o--|| ADDRESS : "ships to"
 ```
 
-## Modules / Services
+> Cross-service relationships (User→Order, CartItem→Product, OrderItem→Product) are maintained by UUID references, not JPA foreign keys.
 
-> To be documented as services are added.
+## Business Decisions
+
+- **Product snapshot on cart/order**: `CartItem` and `OrderItem` store `productName` and `price` at the time of addition, so price changes do not affect existing carts or orders.
+- **Cart auto-created**: A cart is created automatically the first time a user adds an item.
+- **Cart cleared on order**: Placing an order clears the user's cart atomically.
+- **Stock validation**: Stock is checked before an order is placed. Insufficient stock throws an error with the product name and available quantity.
+- **Stock restored on cancel**: Cancelling an order restores stock for every line item.
+- **Cancel guard**: Orders with status `DELIVERED` or `CANCELLED` cannot be cancelled.
+- **Address ownership**: Shipping address is validated to belong to the requesting user before placing an order.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Java 21+
-- Maven 3.8+
-- Docker + Docker Compose (for containerised run)
-- PostgreSQL 16 (for local run without Docker)
+- Docker + Docker Compose
 
-### Run with Docker Compose (recommended)
+### Run
 
 ```bash
 docker compose up --build
 ```
 
-Starts both the app and a PostgreSQL instance. App available at `http://localhost:8080`.
+Creates three PostgreSQL databases and starts all three services.
 
-### Run Locally (without Docker)
-
-Ensure a PostgreSQL instance is running, then configure the following environment variables or update `application.yml`:
-
-```
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=ecommerce
-DB_USER=postgres
-DB_PASSWORD=postgres
-```
-
-```bash
-mvn spring-boot:run
-```
+| Service | URL |
+|---------|-----|
+| user-service | http://localhost:8081 |
+| product-service | http://localhost:8082 |
+| order-service | http://localhost:8083 |
 
 ### Actuator
 
-Monitor the application at `http://localhost:8080/actuator`.
+Each service exposes `/actuator` on its port.
 
 | Endpoint | Description |
 |----------|-------------|
@@ -178,195 +184,7 @@ Monitor the application at `http://localhost:8080/actuator`.
 | `/actuator/info` | App metadata |
 | `/actuator/metrics` | JVM and HTTP metrics |
 | `/actuator/mappings` | All registered HTTP endpoints |
-| `/actuator/env` | Active environment properties |
-| `/actuator/loggers` | View and change log levels at runtime |
 
-## API Overview
+## API Documentation
 
-### Users
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/internal/users` | Retrieve all users with full details (internal) |
-| GET | `/api/users/{id}` | Retrieve a user by UUID |
-| POST | `/api/users` | Create a new user |
-| PUT | `/api/users/{id}` | Update an existing user |
-| POST | `/api/users/{id}/addresses` | Add a new address to an existing user |
-| POST | `/api/users/{id}/cart` | Add a product to the user's cart |
-
-#### User Request Body (`POST` / `PUT`)
-
-```json
-{
-  "firstName": "John",
-  "lastName": "Doe",
-  "email": "john.doe@example.com",
-  "phoneNumber": "9876543210",
-  "userRole": "CUSTOMER",
-  "addresses": [
-    {
-      "street": "123 Main St",
-      "city": "Chennai",
-      "state": "Tamil Nadu",
-      "country": "India",
-      "pincode": "600001"
-    }
-  ]
-}
-```
-
-> `addresses` is optional — omit it to create a user without any address.
-
-> `userRole` accepted values: `CUSTOMER`, `ADMIN`
-
-#### User Response Body
-
-```json
-{
-  "firstName": "John",
-  "lastName": "Doe",
-  "email": "john.doe@example.com",
-  "phoneNumber": "9876543210",
-  "userRole": "CUSTOMER",
-  "addresses": [
-    {
-      "id": "uuid-here",
-      "street": "123 Main St",
-      "city": "Chennai",
-      "state": "Tamil Nadu",
-      "country": "India",
-      "pincode": "600001"
-    }
-  ]
-}
-```
-
-#### Add Address Request Body (`POST /api/users/{id}/addresses`)
-
-```json
-{
-  "street": "456 Park Avenue",
-  "city": "Bangalore",
-  "state": "Karnataka",
-  "country": "India",
-  "pincode": "560001"
-}
-```
-
-> Returns `200 OK` with no body on success.
-
-#### Add to Cart Request Body (`POST /api/users/{id}/cart`)
-
-```json
-{
-  "productId": "uuid-of-product",
-  "quantity": 2
-}
-```
-
-#### Add to Cart Response Body
-
-```json
-{
-  "userFullName": "John Doe",
-  "cartItems": [
-    {
-      "productName": "Wireless Headphones",
-      "productPrice": 2999.99,
-      "quantity": 2,
-      "totalPrice": 5999.98
-    }
-  ],
-  "cartTotal": 5999.98
-}
-```
-
-> A cart is created automatically on first item add. Subsequent calls append items to the same cart.
-
-### Cart
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/users/{id}/cart` | Get the user's current cart |
-| DELETE | `/api/users/{id}/cart/{cartItemId}` | Remove an item from the cart |
-
-### Orders
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/users/{id}/orders` | Place an order from the user's cart |
-| GET | `/api/users/{id}/orders` | Get all orders for a user |
-| GET | `/api/users/{id}/orders/{orderId}` | Get a single order by ID |
-| PATCH | `/api/users/{id}/orders/{orderId}/cancel` | Cancel an order |
-
-#### Place Order Request Body (`POST /api/users/{id}/orders`)
-
-```json
-{
-  "shippingAddressId": "uuid-of-address"
-}
-```
-
-#### Place Order Response Body
-
-```json
-{
-  "userFullName": "John Doe",
-  "orderItems": [
-    {
-      "productName": "Wireless Headphones",
-      "quantity": 2,
-      "priceAtPurchase": 2999.99,
-      "totalPrice": 5999.98
-    }
-  ],
-  "status": "PENDING",
-  "totalAmount": 5999.98,
-  "shippingAddress": "123 Main St, Chennai, Tamil Nadu, India - 600001",
-  "createdAt": "2026-04-17T10:00:00"
-}
-```
-
-> Cart is automatically cleared after a successful order placement.
-
-> `status` accepted values: `PENDING`, `CONFIRMED`, `SHIPPED`, `DELIVERED`, `CANCELLED`
-
-### Products
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/internal/products` | Retrieve all products with full details (internal) |
-| GET | `/api/products/search?name={name}` | Search products by name (partial, case-insensitive) |
-| GET | `/api/products/category/{category}` | Retrieve all products by category |
-| POST | `/api/products` | Create a new product |
-| DELETE | `/api/products/{id}` | Delete a product by UUID |
-
-#### Product Request Body (`POST /api/products`)
-
-```json
-{
-  "name": "Wireless Headphones",
-  "description": "Noise cancelling over-ear headphones",
-  "price": 2999.99,
-  "stockQuantity": 50,
-  "imageUrl": "https://example.com/images/headphones.jpg",
-  "category": "ELECTRONICS"
-}
-```
-
-> `description` and `imageUrl` are optional.
-
-#### Product Response Body
-
-```json
-{
-  "name": "Wireless Headphones",
-  "description": "Noise cancelling over-ear headphones",
-  "price": 2999.99,
-  "stockQuantity": 50,
-  "imageUrl": "https://example.com/images/headphones.jpg",
-  "category": "ELECTRONICS"
-}
-```
-
-> `category` accepted values: `ELECTRONICS`, `CLOTHING`, `FOOTWEAR`, `GROCERIES`, `FURNITURE`, `BOOKS`
+See [swagger.yml](swagger.yml) for the full OpenAPI 3.0 specification covering all endpoints across all three services.

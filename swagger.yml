@@ -1,0 +1,668 @@
+openapi: 3.0.3
+info:
+  title: Ecommerce API
+  description: REST API specification for the ecommerce microservices platform.
+  version: 0.0.1-SNAPSHOT
+
+servers:
+  - url: http://localhost:8081
+    description: user-service
+  - url: http://localhost:8082
+    description: product-service
+  - url: http://localhost:8083
+    description: order-service
+
+tags:
+  - name: Users
+    description: User management (user-service :8081)
+  - name: Addresses
+    description: Address management (user-service :8081)
+  - name: Cart
+    description: Cart management (user-service :8081)
+  - name: Products
+    description: Product management (product-service :8082)
+  - name: Orders
+    description: Order management (order-service :8083)
+
+paths:
+
+  # ─── Users ───────────────────────────────────────────────────────────────────
+
+  /internal/users:
+    get:
+      tags: [Users]
+      summary: Get all users (internal)
+      responses:
+        '200':
+          description: List of all users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /api/users:
+    post:
+      tags: [Users]
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /api/users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by ID
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+    put:
+      tags: [Users]
+      summary: Update an existing user
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+
+  # ─── Addresses ───────────────────────────────────────────────────────────────
+
+  /api/users/{id}/addresses:
+    post:
+      tags: [Addresses]
+      summary: Add an address to a user
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressRequest'
+      responses:
+        '200':
+          description: Address added
+
+  /api/users/{id}/addresses/{addressId}:
+    get:
+      tags: [Addresses]
+      summary: Get a specific address belonging to a user
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - name: addressId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Address found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressResponse'
+        '404':
+          description: Address not found or does not belong to user
+
+  # ─── Cart ─────────────────────────────────────────────────────────────────────
+
+  /api/users/{id}/cart:
+    get:
+      tags: [Cart]
+      summary: Get the user's cart
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Cart contents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+    post:
+      tags: [Cart]
+      summary: Add a product to the cart
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemRequest'
+            example:
+              productId: "uuid-of-product"
+              quantity: 2
+      responses:
+        '200':
+          description: Updated cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+    delete:
+      tags: [Cart]
+      summary: Clear the entire cart
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Cart cleared
+
+  /api/users/{id}/cart/{cartItemId}:
+    delete:
+      tags: [Cart]
+      summary: Remove a specific item from the cart
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - name: cartItemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Updated cart after removal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+        '404':
+          description: Cart item not found
+
+  # ─── Products ────────────────────────────────────────────────────────────────
+
+  /api/internal/products:
+    get:
+      tags: [Products]
+      summary: Get all products (internal)
+      responses:
+        '200':
+          description: List of all products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /api/products/{id}:
+    get:
+      tags: [Products]
+      summary: Get product by ID
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+
+  /api/products/search:
+    get:
+      tags: [Products]
+      summary: Search products by name
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Matching products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /api/products/category/{category}:
+    get:
+      tags: [Products]
+      summary: Get products by category
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/Category'
+      responses:
+        '200':
+          description: Products in category
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /api/products:
+    post:
+      tags: [Products]
+      summary: Create a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+
+  /api/products/{id}/stock:
+    put:
+      tags: [Products]
+      summary: Update product stock (internal — called by order-service)
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+        - name: delta
+          in: query
+          required: true
+          description: Positive to add stock, negative to deduct
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Stock updated
+        '400':
+          description: Insufficient stock
+
+  /api/products/{id}:
+    delete:
+      tags: [Products]
+      summary: Delete a product
+      parameters:
+        - $ref: '#/components/parameters/ProductId'
+      responses:
+        '204':
+          description: Product deleted
+        '404':
+          description: Product not found
+
+  # ─── Orders ──────────────────────────────────────────────────────────────────
+
+  /api/users/{id}/orders:
+    post:
+      tags: [Orders]
+      summary: Place an order from the user's cart
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '201':
+          description: Order placed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Empty cart or insufficient stock
+    get:
+      tags: [Orders]
+      summary: Get all orders for a user
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderResponse'
+
+  /api/users/{id}/orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: Get a single order by ID
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Order found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '404':
+          description: Order not found
+
+  /api/users/{id}/orders/{orderId}/cancel:
+    patch:
+      tags: [Orders]
+      summary: Cancel an order
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Order cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          description: Order cannot be cancelled (DELIVERED or already CANCELLED)
+
+# ─── Components ──────────────────────────────────────────────────────────────
+
+components:
+
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      description: User UUID
+      schema:
+        type: string
+        format: uuid
+    ProductId:
+      name: id
+      in: path
+      required: true
+      description: Product UUID
+      schema:
+        type: string
+        format: uuid
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      description: Order UUID
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+
+    UserRole:
+      type: string
+      enum: [CUSTOMER, ADMIN]
+
+    Category:
+      type: string
+      enum: [ELECTRONICS, CLOTHING, FOOTWEAR, GROCERIES, FURNITURE, BOOKS]
+
+    OrderStatus:
+      type: string
+      enum: [PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED]
+
+    AddressRequest:
+      type: object
+      required: [street, city, state, country, pincode]
+      properties:
+        street:
+          type: string
+          example: "123 Main St"
+        city:
+          type: string
+          example: "Chennai"
+        state:
+          type: string
+          example: "Tamil Nadu"
+        country:
+          type: string
+          example: "India"
+        pincode:
+          type: string
+          example: "600001"
+
+    AddressResponse:
+      allOf:
+        - $ref: '#/components/schemas/AddressRequest'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+
+    UserRequest:
+      type: object
+      required: [firstName, lastName, email, userRole]
+      properties:
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        phoneNumber:
+          type: string
+          example: "9876543210"
+        userRole:
+          $ref: '#/components/schemas/UserRole'
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressRequest'
+
+    UserResponse:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phoneNumber:
+          type: string
+        userRole:
+          $ref: '#/components/schemas/UserRole'
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressResponse'
+
+    User:
+      allOf:
+        - $ref: '#/components/schemas/UserResponse'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    CartItemRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+
+    CartItemResponse:
+      type: object
+      properties:
+        productName:
+          type: string
+        productPrice:
+          type: number
+          format: decimal
+        quantity:
+          type: integer
+        totalPrice:
+          type: number
+          format: decimal
+
+    CartResponse:
+      type: object
+      properties:
+        userFullName:
+          type: string
+          example: "John Doe"
+        cartItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItemResponse'
+        cartTotal:
+          type: number
+          format: decimal
+          example: 5999.98
+
+    ProductRequest:
+      type: object
+      required: [name, price, stockQuantity, category]
+      properties:
+        name:
+          type: string
+          example: "Wireless Headphones"
+        description:
+          type: string
+          example: "Noise cancelling over-ear headphones"
+        price:
+          type: number
+          format: decimal
+          example: 2999.99
+        stockQuantity:
+          type: integer
+          minimum: 0
+          example: 50
+        imageUrl:
+          type: string
+          example: "https://example.com/images/headphones.jpg"
+        category:
+          $ref: '#/components/schemas/Category'
+
+    ProductResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: decimal
+        stockQuantity:
+          type: integer
+        imageUrl:
+          type: string
+        category:
+          $ref: '#/components/schemas/Category'
+
+    Product:
+      allOf:
+        - $ref: '#/components/schemas/ProductResponse'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    OrderRequest:
+      type: object
+      required: [shippingAddressId]
+      properties:
+        shippingAddressId:
+          type: string
+          format: uuid
+
+    OrderItemResponse:
+      type: object
+      properties:
+        productName:
+          type: string
+        quantity:
+          type: integer
+        priceAtPurchase:
+          type: number
+          format: decimal
+        totalPrice:
+          type: number
+          format: decimal
+
+    OrderResponse:
+      type: object
+      properties:
+        userFullName:
+          type: string
+          example: "John Doe"
+        orderItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        totalAmount:
+          type: number
+          format: decimal
+          example: 5999.98
+        shippingAddress:
+          type: string
+          example: "123 Main St, Chennai, Tamil Nadu, India - 600001"
+        createdAt:
+          type: string
+          format: date-time
