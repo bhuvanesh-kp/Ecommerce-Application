@@ -2,8 +2,6 @@ package org.bhuvanesh.userservice.dto;
 
 import lombok.*;
 
-import java.util.UUID;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,7 +11,7 @@ import java.util.UUID;
 @Builder
 public class AddressResponseDto {
 
-    private UUID id;
+    private String id;
     private String street;
     private String city;
     private String state;

@@ -3,10 +3,9 @@ package org.bhuvanesh.userservice.service;
 import lombok.RequiredArgsConstructor;
 import org.bhuvanesh.userservice.dto.*;
 import org.bhuvanesh.userservice.model.*;
-import org.bhuvanesh.userservice.repository.*;
+import org.bhuvanesh.userservice.repository.UserRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
@@ -20,47 +19,43 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final AddressRepository addressRepository;
-    private final CartRepository cartRepository;
-    private final CartItemRepository cartItemRepository;
     private final RestTemplate restTemplate;
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    public UserResponseDto getUserById(@NonNull UUID id) {
+    public UserResponseDto getUserById(@NonNull String id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
         return toResponseDto(user);
     }
 
-    @Transactional
     public UserResponseDto createUser(UserRequestDto dto) {
-        User user = new User();
-        user.setFirstName(dto.getFirstName());
-        user.setLastName(dto.getLastName());
-        user.setEmail(dto.getEmail());
-        user.setPhoneNumber(dto.getPhoneNumber());
-        user.setUserRole(dto.getUserRole());
+        User user = User.builder()
+                .firstName(dto.getFirstName())
+                .lastName(dto.getLastName())
+                .email(dto.getEmail())
+                .phoneNumber(dto.getPhoneNumber())
+                .userRole(dto.getUserRole())
+                .build();
 
-        User savedUser = userRepository.save(user);
-
-        if (dto.getAddresses() != null && !dto.getAddresses().isEmpty()) {
+        if (dto.getAddresses() != null) {
             List<Address> addresses = dto.getAddresses().stream()
                     .map(a -> Address.builder()
+                            .id(UUID.randomUUID().toString())
                             .street(a.getStreet()).city(a.getCity())
                             .state(a.getState()).country(a.getCountry())
-                            .pincode(a.getPincode()).user(savedUser)
+                            .pincode(a.getPincode())
                             .build())
                     .toList();
-            addressRepository.saveAll(addresses);
+            user.setAddresses(addresses);
         }
 
-        return toResponseDto(savedUser);
+        return toResponseDto(userRepository.save(user));
     }
 
-    public UserResponseDto updateUser(@NonNull UUID id, UserRequestDto dto) {
+    public UserResponseDto updateUser(@NonNull String id, UserRequestDto dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
@@ -73,39 +68,36 @@ public class UserService {
         return toResponseDto(userRepository.save(user));
     }
 
-    public void clearCart(@NonNull UUID userId) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user id: " + userId));
-        cart.getCartItems().clear();
-        cartRepository.save(cart);
-    }
-
-    public AddressResponseDto getAddressById(@NonNull UUID userId, @NonNull UUID addressId) {
-        Address address = addressRepository.findByIdAndUserId(addressId, userId)
-                .orElseThrow(() -> new RuntimeException("Address not found or does not belong to user"));
-        return AddressResponseDto.builder()
-                .id(address.getId()).street(address.getStreet()).city(address.getCity())
-                .state(address.getState()).country(address.getCountry()).pincode(address.getPincode())
-                .build();
-    }
-
-    public void addAddress(@NonNull UUID userId, AddressRequestDto dto) {
+    public void addAddress(@NonNull String userId, AddressRequestDto dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        addressRepository.save(Address.builder()
+        user.getAddresses().add(Address.builder()
+                .id(UUID.randomUUID().toString())
                 .street(dto.getStreet()).city(dto.getCity())
                 .state(dto.getState()).country(dto.getCountry())
-                .pincode(dto.getPincode()).user(user)
+                .pincode(dto.getPincode())
                 .build());
+
+        userRepository.save(user);
     }
 
-    @Transactional
-    public CartResponseDto addToCart(@NonNull UUID userId, CartItemRequestDto dto) {
+    public AddressResponseDto getAddressById(@NonNull String userId, @NonNull String addressId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        // fetch product details from product-service
+        Address address = user.getAddresses().stream()
+                .filter(a -> addressId.equals(a.getId()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Address not found or does not belong to user"));
+
+        return toAddressResponseDto(address);
+    }
+
+    public CartResponseDto addToCart(@NonNull String userId, CartItemRequestDto dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
         Map<?, ?> product = restTemplate.getForObject(
                 "http://product-service/api/products/" + dto.getProductId(), Map.class);
 
@@ -116,49 +108,48 @@ public class UserService {
         String productName = (String) product.get("name");
         BigDecimal productPrice = new BigDecimal(product.get("price").toString());
 
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseGet(() -> cartRepository.save(Cart.builder().user(user).build()));
-
         CartItem cartItem = CartItem.builder()
-                .cart(cart)
+                .id(UUID.randomUUID().toString())
                 .productId(dto.getProductId())
                 .productName(productName)
                 .productPrice(productPrice)
                 .quantity(dto.getQuantity())
                 .build();
 
-        cartItemRepository.save(cartItem);
-        cart.getCartItems().add(cartItem);
+        user.getCartItems().add(cartItem);
+        userRepository.save(user);
 
-        return toCartResponseDto(cart, user);
+        return toCartResponseDto(user);
     }
 
-    public CartResponseDto getCart(@NonNull UUID userId) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user id: " + userId));
-        return toCartResponseDto(cart, cart.getUser());
+    public CartResponseDto getCart(@NonNull String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        return toCartResponseDto(user);
     }
 
-    @Transactional
-    public CartResponseDto removeFromCart(@NonNull UUID userId, @NonNull UUID cartItemId) {
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user id: " + userId));
+    public CartResponseDto removeFromCart(@NonNull String userId, @NonNull String cartItemId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found with id: " + cartItemId));
-
-        if (!cartItem.getCart().getId().equals(cart.getId())) {
-            throw new RuntimeException("Cart item does not belong to user's cart");
+        boolean removed = user.getCartItems().removeIf(item -> cartItemId.equals(item.getId()));
+        if (!removed) {
+            throw new RuntimeException("Cart item not found with id: " + cartItemId);
         }
 
-        cart.getCartItems().remove(cartItem);
-        cartItemRepository.delete(cartItem);
-
-        return toCartResponseDto(cart, cart.getUser());
+        userRepository.save(user);
+        return toCartResponseDto(user);
     }
 
-    private CartResponseDto toCartResponseDto(Cart cart, User user) {
-        List<CartItemResponseDto> itemDtos = cart.getCartItems().stream()
+    public void clearCart(@NonNull String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        user.getCartItems().clear();
+        userRepository.save(user);
+    }
+
+    private CartResponseDto toCartResponseDto(User user) {
+        List<CartItemResponseDto> itemDtos = user.getCartItems().stream()
                 .map(item -> CartItemResponseDto.builder()
                         .productName(item.getProductName())
                         .productPrice(item.getProductPrice())
@@ -180,18 +171,20 @@ public class UserService {
 
     private UserResponseDto toResponseDto(User user) {
         List<AddressResponseDto> addressDtos = user.getAddresses() != null
-                ? user.getAddresses().stream()
-                        .map(a -> AddressResponseDto.builder()
-                                .id(a.getId()).street(a.getStreet()).city(a.getCity())
-                                .state(a.getState()).country(a.getCountry()).pincode(a.getPincode())
-                                .build())
-                        .toList()
+                ? user.getAddresses().stream().map(this::toAddressResponseDto).toList()
                 : new ArrayList<>();
 
         return UserResponseDto.builder()
                 .firstName(user.getFirstName()).lastName(user.getLastName())
                 .email(user.getEmail()).phoneNumber(user.getPhoneNumber())
                 .userRole(user.getUserRole()).addresses(addressDtos)
+                .build();
+    }
+
+    private AddressResponseDto toAddressResponseDto(Address a) {
+        return AddressResponseDto.builder()
+                .id(a.getId()).street(a.getStreet()).city(a.getCity())
+                .state(a.getState()).country(a.getCountry()).pincode(a.getPincode())
                 .build();
     }
 }
